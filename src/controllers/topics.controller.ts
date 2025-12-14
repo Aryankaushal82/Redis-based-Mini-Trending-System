@@ -1,5 +1,6 @@
 import { NextFunction, Request, Response } from "express";
 import { getAllTopicsService, getTopicHistoryService, getTrendingTopicsService, mentionTopicService } from "../services/topics.service";
+import redisClient from "../config/redis";
 
 
 export const mentionTopic = async (
@@ -18,7 +19,10 @@ export const mentionTopic = async (
     }
 
     const result = await mentionTopicService(name);
-
+    await redisClient.zIncrBy("trending_topics",1,name.toLowerCase().trim());
+    await redisClient.set(`topic:lastSeen:${name.toLowerCase().trim()}`, new Date().toISOString(),
+      {EX:600}
+    );
     return res.status(201).json({
       success: true,
       data: result,
@@ -85,4 +89,19 @@ export const getTrendingTopics = async (
     next(error);
   }
 };
+
+export const redisTest = async(req: Request,
+  res: Response,
+  next: NextFunction)=>{
+    try {
+      await redisClient.set("test-key","Hello Redis!");
+      const value = await redisClient.get("test-key");
+      return res.status(200).json({
+        success: true,
+        data: value,
+      });
+    } catch (error) {
+      next(error);
+    }
+  }
 

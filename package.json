@@ -6,7 +6,8 @@
     "build": "tsc",
     "start": "node dist/index.js",
     "dev": "ts-node src/index.ts",
-    "migrate":"npx prisma generate",
+    "generate": "npx prisma generate",
+    "migrate": "npx prisma migrate dev",
     "db:deploy": "npx prisma migrate deploy && npx prisma generate",
     "prestart": "npm run build"
   },
@@ -19,7 +20,8 @@
     "@prisma/client": "^7.1.0",
     "dotenv": "^17.2.3",
     "express": "^5.2.1",
-    "pg": "^8.16.3"
+    "pg": "^8.16.3",
+    "redis": "^5.10.0"
   },
   "devDependencies": {
     "@types/express": "^5.0.6",

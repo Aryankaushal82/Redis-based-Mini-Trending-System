@@ -1,8 +1,8 @@
 import { prisma } from "../config/prisma";
+import redisClient from "../config/redis";
 
 export const mentionTopicService = async (name: string) => {
   const normalizedName = name.toLowerCase().trim();
-
   return prisma.$transaction(async (tx) => {
     let topic = await tx.topic.findUnique({
       where: { name: normalizedName },
@@ -19,7 +19,6 @@ export const mentionTopicService = async (name: string) => {
         topicId: topic.id,
       },
     });
-
     return {
       topic: topic.name,
       mentionedAt: new Date(),
@@ -64,25 +63,57 @@ export const getTopicHistoryService = async (name: string) => {
   };
 };
 
+// export const getTrendingTopicsService = async () => {
+//   const result = await prisma.topic.findMany({
+//     select: {
+//       name: true,
+//       _count: {
+//         select: { mentions: true },
+//       },
+//     },
+//     orderBy: {
+//       mentions: {
+//         _count: "desc",
+//       },
+//     },
+//     take: 10,
+//   });
+//   console.log("Trending Topics Result:", result);
+//   return result.map((item) => ({
+//     topic: item.name,
+//     mentions: item._count.mentions,
+//   }));
+// };
+
 export const getTrendingTopicsService = async () => {
-  const result = await prisma.topic.findMany({
-    select: {
-      name: true,
-      _count: {
-        select: { mentions: true },
-      },
-    },
-    orderBy: {
-      mentions: {
-        _count: "desc",
-      },
-    },
-    take: 10,
-  });
-  console.log("Trending Topics Result:", result);
-  return result.map((item) => ({
-    topic: item.name,
-    mentions: item._count.mentions,
-  }));
+  const raw = await redisClient.zRangeWithScores(
+    "trending:topics",
+    0,
+    9,
+    { REV: true }
+  );
+
+  const result = [];
+
+  for (const item of raw) {
+    const topic = item.value;
+    const score = item.score;
+
+    const exists = await redisClient.exists(
+      `topic:lastSeen:${topic}`
+    );
+
+    if (!exists) {
+      await redisClient.zRem("trending:topics", topic);
+      continue;
+    }
+
+    result.push({
+      topic,
+      mentions: score,
+    });
+  }
+
+  return result;
 };
 
