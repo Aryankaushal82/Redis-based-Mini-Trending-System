@@ -1,14 +1,17 @@
 import express from 'express';
 import { connectRedis } from './config/redis';
-
+import cors from 'cors';
 import { envConfig } from './config';
-import topicsRouter from './routes/v1/topics.router';
+import v1Router from './routes/v1';
+
 const app = express();
 const PORT = envConfig.port;
 
-// routers
+app.use(cors());
 app.use(express.json());
-app.use("/api/v1/topics", topicsRouter);
+
+// routers
+app.use("/api/v1", v1Router);
 
 // redis server
 const startServer = async () => {

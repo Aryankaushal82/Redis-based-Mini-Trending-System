@@ -1,4 +1,4 @@
-import { prisma } from "../config/prisma";
+import prisma from "../lib/prisma";
 import redisClient from "../config/redis";
 
 export const mentionTopicService = async (name: string) => {
@@ -63,27 +63,7 @@ export const getTopicHistoryService = async (name: string) => {
   };
 };
 
-// export const getTrendingTopicsService = async () => {
-//   const result = await prisma.topic.findMany({
-//     select: {
-//       name: true,
-//       _count: {
-//         select: { mentions: true },
-//       },
-//     },
-//     orderBy: {
-//       mentions: {
-//         _count: "desc",
-//       },
-//     },
-//     take: 10,
-//   });
-//   console.log("Trending Topics Result:", result);
-//   return result.map((item) => ({
-//     topic: item.name,
-//     mentions: item._count.mentions,
-//   }));
-// };
+
 
 export const getTrendingTopicsService = async () => {
   const raw = await redisClient.zRangeWithScores(
@@ -104,8 +84,8 @@ export const getTrendingTopicsService = async () => {
     );
 
     if (!exists) {
-      await redisClient.zRem("trending:topics", topic);
-      continue;
+      // await redisClient.zRem("trending:topics", topic);
+      // continue;
     }
 
     result.push({

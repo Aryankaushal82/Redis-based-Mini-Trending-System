@@ -19,7 +19,7 @@ export const mentionTopic = async (
     }
 
     const result = await mentionTopicService(name);
-    await redisClient.zIncrBy("trending_topics",1,name.toLowerCase().trim());
+    await redisClient.zIncrBy("trending:topics",1,name.toLowerCase().trim());
     await redisClient.set(`topic:lastSeen:${name.toLowerCase().trim()}`, new Date().toISOString(),
       {EX:600}
     );
